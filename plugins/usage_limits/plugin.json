@@ -1,0 +1,6 @@
+{
+  "label": "Usage limits",
+  "description": "Each usage-limit window over time (Claude Code, ChatGPT, Copilot), a notification when one runs low, and a usage_limits_now tool for agents.",
+  "version": "1.1",
+  "api": 1
+}

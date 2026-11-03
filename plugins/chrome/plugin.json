@@ -1,0 +1,6 @@
+{
+  "label": "Chrome",
+  "description": "Relay in Chrome's side panel, and your agents in your own Chrome: they read the pages you're signed in to, click, type and open pages there, each step allowed by you.",
+  "version": "1.2",
+  "api": 1
+}

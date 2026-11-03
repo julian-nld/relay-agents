@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "relay-sdk"
+version = "4.2.0"
+description = "Relay's Python SDK: conversations with Relay's agents"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+
+[tool.setuptools]
+packages = ["relay_sdk"]

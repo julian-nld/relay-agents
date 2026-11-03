@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""`relay` in an agent's WorkBox (Relay puts this folder first on its commands' PATH).
+
+It runs Relay's tools script (the same for every conversation, next to RELAY_URL_FILE) for the
+conversation the command is for: $RELAY_MCP_URL when the agent's program says whose it is
+(Claude Code, command agents), else the one Relay finds for this folder (the agent working here
+now: opencode's shared service has no conversation of its own). Relay tells a box only its own
+agents' address: it signs the box's folder (RELAY_BOX, RELAY_BOX_KEY).
+"""
+
+import json
+import os
+import sys
+import urllib.error
+import urllib.parse
+import urllib.request
+
+
+def relay_url():
+    try:
+        with open(os.environ.get("RELAY_URL_FILE") or "") as file:
+            return file.read().strip()
+    except OSError:
+        sys.exit("relay: Relay's address isn't known here (is Relay running?)")
+
+
+def found_for(folder):
+    """The MCP address of the agent working in `folder`, asking Relay."""
+    query = urllib.parse.urlencode({"folder": folder, "box": os.environ.get("RELAY_BOX") or "",
+                                    "key": os.environ.get("RELAY_BOX_KEY") or ""})
+    try:
+        with urllib.request.urlopen(f"{relay_url()}/tools-for?{query}", timeout=30) as response:
+            return json.loads(response.read())["url"]
+    except urllib.error.HTTPError as exc:
+        try:
+            message = json.loads(exc.read()).get("error")
+        except ValueError:
+            message = None
+        sys.exit(f"relay: {message or exc}")
+    except (OSError, ValueError, KeyError) as exc:
+        sys.exit(f"relay: can't reach Relay ({exc})")
+
+
+SERVED = os.environ.get("RELAY_SERVE_DIR") or "/tmp/relay-serve"  # (in the WorkBox) a server's command, pid (its session) and log, by name
+LISTEN_WAIT = float(os.environ.get("RELAY_SERVE_WAIT") or 10)  # seconds more a new server may take to listen
+SERVE_HELP = """usage: relay serve NAME COMMAND…   start COMMAND (in this folder) as server NAME, detached: it runs
+                                   on after your turn; again with the same NAME: restarted
+       relay serve --stop NAME     stop it
+       relay serve --list          the servers, whether they run, their ports and logs"""
+
+
+def listening(session):
+    """The TCP ports the processes of `session` (a server's) listen on: their sockets among the
+    machine's listening ones (/proc; the WorkBox shares the machine's network)."""
+    inodes = set()
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit():
+            continue
+        try:
+            with open(f"/proc/{entry}/stat") as file:
+                stat = file.read()
+            if int(stat[stat.rindex(")") + 2:].split()[3]) != session:  # (state, ppid, pgrp, session)
+                continue
+            for fd in os.listdir(f"/proc/{entry}/fd"):
+                link = os.readlink(f"/proc/{entry}/fd/{fd}")
+                if link.startswith("socket:["):
+                    inodes.add(link[8:-1])
+        except (OSError, ValueError, IndexError):
+            continue
+    ports = set()
+    for table in ("/proc/net/tcp", "/proc/net/tcp6"):
+        try:
+            with open(table) as file:
+                rows = file.read().splitlines()[1:]
+        except OSError:
+            continue
+        for row in rows:
+            columns = row.split()
+            if len(columns) > 9 and columns[3] == "0A" and columns[9] in inodes:  # (0A: listening)
+                ports.add(int(columns[1].rsplit(":", 1)[1], 16))
+    return sorted(ports)
+
+
+def where(ports):
+    """How the user reaches them: through Relay (relay.forward), not this machine's ports."""
+    return "; ".join(f"the user opens port {port} at /port/{port}/ on Relay's address (your link "
+                     f"http://localhost:{port}/ in a reply becomes that)" for port in ports)
+
+
+def serve(args):
+    """A server that outlives the agent's turn: in a session of its own (which Relay's ending of a
+    turn's commands spares), its output in a log; by name, so restarting and stopping need no pkill
+    (whose pattern matches its own command line too)."""
+    import shlex
+    import signal
+    import subprocess
+    import time
+    os.makedirs(SERVED, exist_ok=True)
+
+    def running(name):
+        try:
+            with open(f"{SERVED}/{name}.pid") as file:
+                pid = int(file.read())
+            os.kill(pid, 0)
+            return pid
+        except (OSError, ValueError):
+            return None
+
+    def stop(name):
+        pid = running(name)
+        if pid is None:
+            return False
+        for sig, wait in ((signal.SIGTERM, 5), (signal.SIGKILL, 1)):
+            try:
+                os.killpg(pid, sig)  # the server and all it started
+            except OSError:
+                return True
+            for _ in range(wait * 10):
+                if running(name) is None:
+                    return True
+                time.sleep(0.1)
+        return True
+
+    if not args or args[0] in ("-h", "--help"):
+        print(SERVE_HELP)
+        return 0 if args else 2
+    if args[0] == "--list":
+        names = sorted(f[:-4] for f in os.listdir(SERVED) if f.endswith(".cmd"))
+        for name in names:
+            with open(f"{SERVED}/{name}.cmd") as file:
+                command = file.read()
+            pid = running(name)
+            ports = listening(pid) if pid else []
+            print(f"{name}: {'running' if pid else 'stopped'} · {command}"
+                  + (f" · port{'s' if len(ports) > 1 else ''} {', '.join(map(str, ports))}" if ports else "")
+                  + f" · log {SERVED}/{name}.log")
+        if not names:
+            print("No servers (relay serve NAME COMMAND starts one).")
+        return 0
+    if args[0] == "--stop":
+        if len(args) != 2:
+            print(SERVE_HELP, file=sys.stderr)
+            return 2
+        print(f"Stopped {args[1]}." if stop(args[1]) else f"{args[1]} wasn't running.")
+        return 0
+    name, words = args[0], args[1:]
+    if words[:1] == ["--"]:
+        words = words[1:]
+    if not words or not name.replace("-", "").replace("_", "").isalnum():
+        print(SERVE_HELP, file=sys.stderr)
+        return 2
+    command = words[0] if len(words) == 1 else shlex.join(words)
+    restarted = stop(name)
+    with open(f"{SERVED}/{name}.log", "ab") as log:
+        started = subprocess.Popen(["sh", "-c", command], stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                                   start_new_session=True)
+    with open(f"{SERVED}/{name}.pid", "w") as file:
+        file.write(str(started.pid))
+    with open(f"{SERVED}/{name}.cmd", "w") as file:
+        file.write(command)
+    time.sleep(3)
+    ports = listening(started.pid)
+    waited = 0
+    while not ports and started.poll() is None and waited < LISTEN_WAIT:
+        time.sleep(0.5)
+        waited += 0.5
+        ports = listening(started.pid)
+    alive = started.poll() is None
+    print(f"{name} {'restarted' if restarted else 'started'}: {command} ({'running' if alive else 'it stopped already'})")
+    if ports:
+        print(f"Listening: {where(ports)}.")
+    elif alive:
+        print("It doesn't listen on a port yet.")
+    with open(f"{SERVED}/{name}.log", "rb") as log:
+        tail = log.read()[-1500:].decode(errors="replace").strip()
+    if tail:
+        print(f"Its log ({SERVED}/{name}.log), so far:\n{tail}")
+    return 0 if alive else 1
+
+
+def main():
+    if sys.argv[1:2] == ["serve"]:  # (here in the WorkBox, not one of Relay's tools)
+        sys.exit(serve(sys.argv[2:]))
+    given = os.environ.get("RELAY_TOOLS")
+    if given and os.path.isfile(given):  # a script of its own (an agent on the machine)
+        os.execv(sys.executable, [sys.executable, given, *sys.argv[1:]])
+    url = os.environ.get("RELAY_MCP_URL") or found_for(os.getcwd())
+    script = os.path.join(os.path.dirname(os.environ.get("RELAY_URL_FILE") or ""), "relay-tools")
+    if not os.path.isfile(script):
+        sys.exit("relay: Relay's tools aren't here (is Relay running?)")
+    os.execve(sys.executable, [sys.executable, script, *sys.argv[1:]], {**os.environ, "RELAY_MCP_URL": url})
+
+
+if __name__ == "__main__":
+    main()

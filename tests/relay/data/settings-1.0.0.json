@@ -1,0 +1,18 @@
+{
+  "host": "0.0.0.0",
+  "port": 8420,
+  "workspace_roots": [
+    "@HOME@/ws"
+  ],
+  "chat_root": "@HOME@/chats",
+  "auth": "password",
+  "secure_cookies": false,
+  "session_days": 365,
+  "ntfy_url": "",
+  "ntfy_token": "",
+  "webhook_url": "",
+  "notify_min_seconds": 45,
+  "public_url": "",
+  "limits": {},
+  "container_image": ""
+}

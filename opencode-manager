@@ -1,0 +1,30 @@
+#!/bin/sh
+# Launcher for opencode-manager: runs the code in this folder; its settings and
+# profiles are in RELAY_HOME/opencode-manager (default ~/.local/share/relay), shared with Relay.
+set -e
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+
+PY=
+for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 &&
+        "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
+        PY=$candidate
+        break
+    fi
+done
+if [ -z "$PY" ]; then
+    echo "opencode-manager: Python 3.10 or newer is required" >&2
+    exit 1
+fi
+
+export PYTHONPATH="$ROOT/src:$ROOT/vendor${PYTHONPATH:+:$PYTHONPATH}"
+# Bytecode caches in the cache folder, not next to the code.
+export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${XDG_CACHE_HOME:-$HOME/.cache}/opencode-manager/pycache}"
+
+if ! "$PY" -c 'import textual' 2>/dev/null; then
+    echo "opencode-manager: Python dependencies missing; run: sh \"$ROOT/scripts/vendor.sh\"" >&2
+    exit 1
+fi
+
+exec "$PY" -m opencode_manager "$@"

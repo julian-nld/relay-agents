@@ -1,0 +1,53 @@
+# The image Relay's agents work in (relay/containers.py), built by Relay on first use.
+# From the base image: Python 3.13 (with pip), git, gcc/g++, make, autotools, curl, wget.
+# Added: Node.js 22 with npm, pnpm, yarn and TypeScript (NodeSource's packages, so apt-get upgrade keeps it
+# current; `n 24` switches to another version); Go; Rust; cmake and ninja; uv, pytest, ruff and mypy for
+# Python; tools agents reach for (ripgrep, fd, jq, yq, sqlite, the GitHub CLI, …); Chromium with
+# playwright-core, for the browser Relay gives opencode (container/browser.cjs); and podman, as docker too,
+# for containers in here (below).
+# Left out for their size: Java, ffmpeg, pandoc, LaTeX. The agent is root here and may
+# install them (apt-get install …); that stays for the project's folder.
+FROM docker.io/library/python:3.13-trixie
+# npm's global installs in /usr/local (as Debian's npm had them, and where `n` puts a node), not NodeSource's /usr
+ENV LANG=C.UTF-8 PIP_ROOT_USER_ACTION=ignore PIP_DISABLE_PIP_VERSION_CHECK=1 NPM_CONFIG_PREFIX=/usr/local
+# apt downloads as user _apt (65534), which a small subuid range doesn't map (podman in
+# a container): as root, like everything in here.
+RUN echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99relay \
+ && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /usr/share/keyrings/nodesource.asc \
+ && echo "deb [signed-by=/usr/share/keyrings/nodesource.asc] https://deb.nodesource.com/node_22.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+    nodejs golang-go rustc cargo cmake ninja-build \
+    ripgrep fd-find bat jq yq tree less file zip unzip zstd rsync sqlite3 postgresql-client \
+    shellcheck git-lfs gh openssh-client dnsutils iputils-ping netcat-openbsd \
+    procps psmisc lsof htop tmux nano vim-tiny \
+    chromium fonts-liberation fonts-noto-color-emoji \
+ && rm -rf /var/lib/apt/lists/* \
+ && ln -s /usr/bin/fdfind /usr/local/bin/fd \
+ && ln -s /usr/bin/batcat /usr/local/bin/bat \
+ && npm install -g playwright-core@1.63.0 pnpm yarn typescript tsx n \
+ && npm cache clean --force \
+ && pip install --no-cache-dir uv \
+ && git config --system init.defaultBranch main
+# Python's usual development tools (their own layer: adding one doesn't rebuild the rest).
+RUN pip install --no-cache-dir pytest pytest-cov pytest-xdist ruff mypy
+# Containers in here (nested): podman, and docker as its other name (podman-docker), `docker compose` through
+# relay-compose. Root here is the user outside (rootless podman), so podman runs in a user namespace of its
+# own (root's subuids) with no more capabilities than the box: Relay starts the box with /proc unmasked
+# (relay.containers, relay.production), and its read-only folders stay read-only. Its containers share the
+# box's network and hostname (it can't make networks of its own), without cgroups; their images live in a
+# volume of the box's at /var/lib/containers.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends podman podman-docker podman-compose uidmap \
+ && rm -rf /var/lib/apt/lists/* \
+ && echo root:1:65535 > /etc/subuid && echo root:1:65535 > /etc/subgid \
+ && touch /etc/containers/nodocker \
+ && mkdir -p /etc/containers/containers.conf.d /etc/containers/registries.conf.d \
+ && printf '[containers]\nnetns = "host"\nutsns = "host"\ncgroups = "disabled"\n\n[engine]\ncgroup_manager = "cgroupfs"\nevents_logger = "file"\ncompose_providers = ["/usr/local/bin/relay-compose"]\ncompose_warning_logs = false\n' \
+    > /etc/containers/containers.conf.d/50-relay.conf \
+ && printf 'unqualified-search-registries = ["docker.io"]\n' > /etc/containers/registries.conf.d/50-relay.conf
+COPY image/relay-compose /usr/local/bin/relay-compose
+RUN ln -s relay-compose /usr/local/bin/docker-compose && ln -s relay-compose /usr/local/bin/podman-compose
+# Agents commit as Relay does (relay.git) unless the project or the agent sets someone: without a name git refuses.
+RUN git config --system user.name Relay && git config --system user.email relay@localhost

@@ -1,0 +1,23 @@
+# Pinned dev tools, installed into vendor-dev/: python3 -m pip install --target vendor-dev -r requirements-dev.lock
+# (pytest 9.2 breaks pytest-xdist 3.8's groups: tests that share real podman then collide)
+anyio==4.15.1
+certifi==2026.7.22
+execnet==2.1.2
+greenlet==3.5.6
+h11==0.16.0
+httpcore==1.0.9
+httpcore2==2.13.1
+httpx==0.28.1
+httpx2==2.13.1
+idna==3.20
+iniconfig==2.3.0
+packaging==26.3
+playwright==1.63.0
+pluggy==1.6.0
+pyee==13.0.1
+Pygments==2.21.0
+pytest==9.1.1
+pytest-xdist==3.8.0
+ruff==0.16.10
+truststore==0.10.4
+typing_extensions==4.16.0

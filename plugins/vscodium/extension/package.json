@@ -1,0 +1,564 @@
+{
+  "name": "relay",
+  "publisher": "relay",
+  "displayName": "Relay",
+  "description": "Relay's agents in VSCodium: your conversations, a chat with any of Relay's agents, a code task's changes in the diff editor.",
+  "version": "1.2.1",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Other"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true,
+      "description": "It runs nothing of the folder's: Relay's agents work on it in their own containers."
+    },
+    "virtualWorkspaces": false
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onWebviewPanel:relay.chat"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Relay",
+      "properties": {
+        "relay.url": {
+          "type": "string",
+          "default": "http://localhost:8420",
+          "markdownDescription": "Relay's address, as the machine this extension runs on reaches it (with Remote - SSH: the machine Relay runs on). Behind a proxy's own sign-in: `https://name:password@host`."
+        },
+        "relay.openIn": {
+          "type": "string",
+          "enum": [
+            "editor",
+            "sidebar"
+          ],
+          "default": "editor",
+          "enumDescriptions": [
+            "An editor tab of its own for each conversation",
+            "The side bar's Chat view (drag it to the secondary side bar if you like)"
+          ],
+          "description": "Where a conversation opens."
+        },
+        "relay.context.activeFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "The open file (and its selection) goes along with a message, as a chip above it that × takes away."
+        },
+        "relay.notifyDone": {
+          "type": "boolean",
+          "default": true,
+          "description": "Say so when an agent is done while its chat isn't in sight."
+        },
+        "relay.review.inline": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep/Undo in the editor: the agent's changes in an open file of the task, marked a piece at a time, with Keep and Undo above each (Source Control has them per file either way)."
+        },
+        "relay.inlineAgent": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "The agent for **Edit with Relay** (Ctrl+I): a provider's id, or `provider/model` (as Relay's Settings → Providers has them). Empty: the agent picked for a new chat last, else the latest conversation's."
+        },
+        "relay.permissions": {
+          "type": "string",
+          "enum": [
+            "ask",
+            "commands",
+            "off"
+          ],
+          "default": "ask",
+          "enumDescriptions": [
+            "Before each command and each file change (a change shows as a diff first)",
+            "Before each command; file changes go ahead (Keep/Undo has them)",
+            "Never: agents go ahead"
+          ],
+          "markdownDescription": "When VSCodium asks you before an agent runs a command or changes a file **on this computer** (a computer task's folder here). Code tasks on Relay's machine work in its containers: Keep/Undo is their review."
+        },
+        "relay.follow": {
+          "type": "boolean",
+          "default": true,
+          "description": "Follow the agent: a file it changes opens beside its chat (without the focus) while the chat is in sight."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "relay",
+          "title": "Relay",
+          "icon": "media/relay.svg"
+        }
+      ]
+    },
+    "views": {
+      "relay": [
+        {
+          "id": "relay.conversations",
+          "name": "Conversations"
+        },
+        {
+          "type": "webview",
+          "id": "relay.chat",
+          "name": "Chat",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "relay.conversations",
+        "contents": "Sign in to Relay with an app password: Relay makes one in Settings → VSCodium.\n[Sign in](command:relay.signIn)",
+        "when": "!relay.signedIn"
+      },
+      {
+        "view": "relay.conversations",
+        "contents": "No conversations yet.\n[New code task in this folder](command:relay.newTask)\n[New chat](command:relay.newChat)",
+        "when": "relay.signedIn"
+      }
+    ],
+    "commands": [
+      {
+        "command": "relay.signIn",
+        "title": "Sign in",
+        "category": "Relay",
+        "icon": "$(account)"
+      },
+      {
+        "command": "relay.signOut",
+        "title": "Sign out",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.newTask",
+        "title": "New code task in this folder",
+        "category": "Relay",
+        "icon": "$(add)"
+      },
+      {
+        "command": "relay.newChat",
+        "title": "New chat",
+        "category": "Relay",
+        "icon": "$(comment)"
+      },
+      {
+        "command": "relay.search",
+        "title": "Find a conversation",
+        "category": "Relay",
+        "icon": "$(search)"
+      },
+      {
+        "command": "relay.refresh",
+        "title": "Refresh",
+        "category": "Relay",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "relay.open",
+        "title": "Open",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.openInRelay",
+        "title": "Open in Relay",
+        "category": "Relay",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "relay.rename",
+        "title": "Rename…",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.stop",
+        "title": "Stop",
+        "category": "Relay",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "relay.delete",
+        "title": "Delete…",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.askAboutSelection",
+        "title": "Ask Relay about this",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.addFile",
+        "title": "Add to Relay's chat",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.update",
+        "title": "Update the extension from Relay",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.computer",
+        "title": "This computer…",
+        "category": "Relay",
+        "icon": "$(device-desktop)"
+      },
+      {
+        "command": "relay.review.open",
+        "title": "Open the change",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.review.revert",
+        "title": "Put back as it was",
+        "category": "Relay",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "relay.review.reviewed",
+        "title": "Mark as reviewed",
+        "category": "Relay",
+        "icon": "$(check)"
+      },
+      {
+        "command": "relay.review.commit",
+        "title": "Commit the task's changes",
+        "category": "Relay",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "relay.review.merge",
+        "title": "Merge the task's branch",
+        "category": "Relay",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "relay.review.discard",
+        "title": "Discard the task's branch…",
+        "category": "Relay",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "relay.review.undo",
+        "title": "Undo all of the task's changes…",
+        "category": "Relay",
+        "icon": "$(history)"
+      },
+      {
+        "command": "relay.review.refresh",
+        "title": "Refresh",
+        "category": "Relay",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "relay.fix",
+        "title": "Fix with Relay",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.addTerminal",
+        "title": "Add to Relay's chat",
+        "category": "Relay"
+      },
+      {
+        "command": "relay.openSide",
+        "title": "Open in the side bar",
+        "category": "Relay",
+        "icon": "$(layout-sidebar-left)"
+      },
+      {
+        "command": "relay.review.next",
+        "title": "Next change of the agent's",
+        "category": "Relay",
+        "icon": "$(arrow-down)"
+      },
+      {
+        "command": "relay.review.previous",
+        "title": "Previous change of the agent's",
+        "category": "Relay",
+        "icon": "$(arrow-up)"
+      },
+      {
+        "command": "relay.inlineEdit",
+        "title": "Edit with Relay",
+        "category": "Relay",
+        "icon": "$(sparkle)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "relay.newTask",
+          "when": "view == relay.conversations && relay.signedIn",
+          "group": "navigation@1"
+        },
+        {
+          "command": "relay.newChat",
+          "when": "view == relay.conversations && relay.signedIn",
+          "group": "navigation@2"
+        },
+        {
+          "command": "relay.search",
+          "when": "view == relay.conversations && relay.signedIn",
+          "group": "navigation@3"
+        },
+        {
+          "command": "relay.refresh",
+          "when": "view == relay.conversations && relay.signedIn",
+          "group": "navigation@4"
+        },
+        {
+          "command": "relay.computer",
+          "when": "view == relay.conversations && relay.signedIn",
+          "group": "more@1"
+        },
+        {
+          "command": "relay.signOut",
+          "when": "view == relay.conversations && relay.signedIn",
+          "group": "more@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "relay.stop",
+          "when": "view == relay.conversations && viewItem =~ /running/",
+          "group": "inline@1"
+        },
+        {
+          "command": "relay.openInRelay",
+          "when": "view == relay.conversations && viewItem =~ /^conversation/",
+          "group": "inline@2"
+        },
+        {
+          "command": "relay.open",
+          "when": "view == relay.conversations && viewItem =~ /^conversation/",
+          "group": "1@1"
+        },
+        {
+          "command": "relay.openInRelay",
+          "when": "view == relay.conversations && viewItem =~ /^conversation/",
+          "group": "1@2"
+        },
+        {
+          "command": "relay.rename",
+          "when": "view == relay.conversations && viewItem =~ /^conversation/",
+          "group": "2@1"
+        },
+        {
+          "command": "relay.stop",
+          "when": "view == relay.conversations && viewItem =~ /running/",
+          "group": "2@2"
+        },
+        {
+          "command": "relay.delete",
+          "when": "view == relay.conversations && viewItem =~ /^conversation/",
+          "group": "3@1"
+        },
+        {
+          "command": "relay.openSide",
+          "when": "view == relay.conversations && viewItem =~ /^conversation/",
+          "group": "1@3"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "relay.askAboutSelection",
+          "when": "relay.signedIn",
+          "group": "relay@1"
+        },
+        {
+          "command": "relay.inlineEdit",
+          "when": "relay.signedIn && !editorReadonly",
+          "group": "relay@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "relay.addFile",
+          "when": "relay.signedIn && !explorerResourceIsFolder",
+          "group": "relay@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "relay.open",
+          "when": "false"
+        },
+        {
+          "command": "relay.openInRelay",
+          "when": "false"
+        },
+        {
+          "command": "relay.rename",
+          "when": "false"
+        },
+        {
+          "command": "relay.stop",
+          "when": "false"
+        },
+        {
+          "command": "relay.delete",
+          "when": "false"
+        },
+        {
+          "command": "relay.addFile",
+          "when": "false"
+        },
+        {
+          "command": "relay.newTask",
+          "when": "relay.signedIn"
+        },
+        {
+          "command": "relay.newChat",
+          "when": "relay.signedIn"
+        },
+        {
+          "command": "relay.search",
+          "when": "relay.signedIn"
+        },
+        {
+          "command": "relay.askAboutSelection",
+          "when": "relay.signedIn && editorIsOpen"
+        },
+        {
+          "command": "relay.review.open",
+          "when": "false"
+        },
+        {
+          "command": "relay.review.revert",
+          "when": "false"
+        },
+        {
+          "command": "relay.review.reviewed",
+          "when": "relay.review.files"
+        },
+        {
+          "command": "relay.review.commit",
+          "when": "relay.review.commit"
+        },
+        {
+          "command": "relay.review.merge",
+          "when": "relay.review.merge"
+        },
+        {
+          "command": "relay.review.undo",
+          "when": "relay.review.undo"
+        },
+        {
+          "command": "relay.review.discard",
+          "when": "relay.review.discard"
+        },
+        {
+          "command": "relay.fix",
+          "when": "false"
+        },
+        {
+          "command": "relay.addTerminal",
+          "when": "relay.signedIn"
+        },
+        {
+          "command": "relay.openSide",
+          "when": "relay.signedIn"
+        },
+        {
+          "command": "relay.review.next",
+          "when": "relay.inline.hunks"
+        },
+        {
+          "command": "relay.review.previous",
+          "when": "relay.inline.hunks"
+        },
+        {
+          "command": "relay.inlineEdit",
+          "when": "relay.signedIn && editorIsOpen"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "relay.review.reviewed",
+          "when": "scmProvider == relay && relay.review.files",
+          "group": "navigation@1"
+        },
+        {
+          "command": "relay.review.commit",
+          "when": "scmProvider == relay && relay.review.commit",
+          "group": "navigation@2"
+        },
+        {
+          "command": "relay.review.merge",
+          "when": "scmProvider == relay && relay.review.merge",
+          "group": "navigation@3"
+        },
+        {
+          "command": "relay.review.undo",
+          "when": "scmProvider == relay && relay.review.undo",
+          "group": "navigation@4"
+        },
+        {
+          "command": "relay.review.discard",
+          "when": "scmProvider == relay && relay.review.discard",
+          "group": "navigation@5"
+        },
+        {
+          "command": "relay.review.refresh",
+          "when": "scmProvider == relay",
+          "group": "navigation@9"
+        }
+      ],
+      "scm/resourceState/context": [
+        {
+          "command": "relay.review.revert",
+          "when": "scmProvider == relay && scmResourceState == relay.revertable",
+          "group": "inline"
+        },
+        {
+          "command": "relay.review.revert",
+          "when": "scmProvider == relay && scmResourceState == relay.revertable",
+          "group": "1_modification"
+        }
+      ],
+      "terminal/context": [
+        {
+          "command": "relay.addTerminal",
+          "when": "relay.signedIn && terminalTextSelected",
+          "group": "relay@1"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "relay.review.previous",
+          "when": "relay.inline.hunks",
+          "group": "navigation@90"
+        },
+        {
+          "command": "relay.review.next",
+          "when": "relay.inline.hunks",
+          "group": "navigation@91"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "relay.askAboutSelection",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus && relay.signedIn"
+      },
+      {
+        "command": "relay.inlineEdit",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "editorTextFocus && relay.signedIn && !editorReadonly"
+      }
+    ]
+  }
+}

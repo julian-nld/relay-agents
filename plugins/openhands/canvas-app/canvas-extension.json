@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "name": "relay",
+  "display_name": "Relay",
+  "version": "1.1.0",
+  "description": "OpenHands' conversations as the Relay tasks they are: their state, agent and changes, and the way back to Relay.",
+  "entrypoint": "extension.js",
+  "icon": "icon.svg",
+  "contributes": {
+    "pages": [
+      { "id": "relay", "title": "Relay", "path": "/relay" }
+    ]
+  }
+}

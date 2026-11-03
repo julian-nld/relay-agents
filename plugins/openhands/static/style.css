@@ -1,0 +1,47 @@
+/* OpenHands' page (static/index.js), in Relay's own colours */
+.oh-page { max-width: 760px; margin: 0 auto; }
+.oh-page h1 { margin: 6px 0 4px; font-size: 24px; }
+.oh-body { display: grid; gap: 14px; margin-top: 14px; }
+.oh-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; background: var(--bg);
+  display: grid; gap: 10px; }
+.oh-card h3 { margin: 0; font-size: 15px; }
+.oh-card p { margin: 0; }
+.oh-card > .btn { justify-self: start; }
+.oh-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.oh-row .muted { margin-left: auto; font-size: 13px; }
+.oh-row a.btn { text-decoration: none; }
+.oh-state { width: 9px; height: 9px; border-radius: 50%; background: var(--fg-faint); flex: none; }
+.oh-state.on { background: var(--success); }
+.oh-doing { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--fg-muted); }
+.oh-spinner { width: 14px; height: 14px; border: 2px solid var(--border-strong); border-top-color: var(--accent);
+  border-radius: 50%; animation: oh-turn 0.8s linear infinite; }
+@keyframes oh-turn { to { transform: rotate(360deg); } }
+.oh-field { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.oh-field > span { min-width: 110px; color: var(--fg-muted); font-size: 13px; }
+.oh-field .select { max-width: 100%; min-width: 0; flex: 1; }
+.oh-field .input { width: 110px; }
+.oh-logs summary { cursor: pointer; color: var(--fg-muted); font-size: 13px; }
+.oh-log { max-height: 320px; overflow: auto; margin: 8px 0 0; padding: 10px; border-radius: var(--radius-sm);
+  background: var(--bg-code); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.oh-dialog { display: grid; gap: 12px; }
+/* While it runs: Canvas framed, filling the page under a slim bar */
+.plugin-page[data-plugin="openhands"]:has(> .oh-framed) { padding: 0; overflow: hidden; display: flex;
+  flex-direction: column; }
+.oh-framed { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.oh-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 12px;
+  border-bottom: 1px solid var(--border); background: var(--bg); }
+.oh-bar a.btn { text-decoration: none; }
+.oh-grow { flex: 1; }
+.oh-agent .select { max-width: 280px; padding: 4px 8px; font-size: 13px; }
+.oh-bar .oh-doing { font-size: 13px; }
+.oh-bar .oh-spinner { width: 12px; height: 12px; }
+.oh-note.oh-asks { background: color-mix(in srgb, var(--accent) 12%, var(--bg)); }
+@media (max-width: 520px) { .oh-tab, .oh-agent { display: none; } }
+.oh-notes:empty { display: none; }
+.oh-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 8px 12px;
+  border-bottom: 1px solid var(--border); background: var(--bg-sidebar); font-size: 13px; }
+.oh-frame { flex: 1; min-height: 0; width: 100%; border: 0; background: var(--bg); }
+.oh-check { display: flex; align-items: center; gap: 8px; margin: 6px 0 10px; }
+/* (its bar button, while it runs: a dot) */
+.plugin-item.oh-on::after { content: ""; position: absolute; right: 7px; bottom: 7px; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--success); border: 2px solid var(--bg-elevated); }

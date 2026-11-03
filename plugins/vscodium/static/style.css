@@ -1,0 +1,14 @@
+/* The VSCodium tab (static/index.js): numbered steps, copyable blocks in Relay's own colours */
+.vsc-step { margin: 14px 0 18px; }
+.vsc-step h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+.vsc-number { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--accent); color: var(--accent-fg); font-size: 12px; }
+.vsc-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.vsc-said:empty { display: none; }
+.vsc-block { position: relative; margin: 6px 0 10px; }
+.vsc-code { margin: 0; padding: 10px 40px 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-code); font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.vsc-copy { position: absolute; top: 6px; right: 6px; }
+.vsc-make { display: flex; gap: 8px; align-items: center; max-width: 420px; }
+.vsc-make .input { flex: 1; min-width: 0; }
+.vsc-made p { margin: 8px 0; }

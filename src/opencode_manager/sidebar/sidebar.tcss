@@ -1,0 +1,94 @@
+Screen {
+    background: $surface;
+    padding: 0 1;
+}
+
+#title {
+    text-style: bold;
+    color: $accent;
+    padding: 1 0;
+}
+
+.section {
+    color: $text-muted;
+    text-style: bold;
+    margin-top: 1;
+}
+
+#profiles {
+    height: auto;
+    max-height: 50%;
+    background: transparent;
+}
+
+#profiles > ListItem {
+    padding: 0 1;
+    background: transparent;
+}
+
+#profiles > ListItem.active {
+    text-style: bold;
+    color: $success;
+}
+
+#profiles > ListItem.-highlight {
+    background: $boost;
+}
+
+#project, #mode {
+    color: $text;
+}
+
+#status {
+    width: 100%;
+    text-wrap: wrap;
+    margin-top: 1;
+    color: $text-muted;
+    height: auto;
+}
+
+#status.error, .error {
+    color: $error;
+}
+
+#help {
+    dock: bottom;
+    color: $text-muted;
+    padding-bottom: 1;
+}
+
+ModalScreen {
+    align: center middle;
+    padding: 0;
+}
+
+.dialog {
+    width: 100%;
+    height: auto;
+    border: round $accent;
+    background: $panel;
+    padding: 0 1;
+}
+
+.dialog-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.dialog Input, .dialog Checkbox, .dialog Label {
+    width: 100%;
+}
+
+.dialog Label {
+    text-wrap: wrap;
+}
+
+.buttons {
+    height: auto;
+    margin-top: 1;
+}
+
+.buttons Button {
+    min-width: 8;
+    margin-right: 1;
+}

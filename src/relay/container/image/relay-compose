@@ -1,0 +1,43 @@
+#!/usr/bin/python3
+"""`docker compose` and `podman compose` in Relay's boxes: podman-compose, with every service on the box's own
+network (a WorkBox or a ProductionBox can't make networks of its own for its containers). A service's name
+points to the box (127.0.0.1), so web:8000 still reaches web; ports aren't remapped: a service listens on its
+own port (two that use the same one can't both run)."""
+import asyncio
+
+import podman_compose as compose
+
+
+def on_the_box(project, service):
+    names = [*project.services, *(s.get("container_name") for s in project.services.values())]
+    return ["--network=host", *(f"--add-host={name}:127.0.0.1" for name in names if name)]
+
+
+async def no_networks(project, service):
+    return None
+
+
+async def passes(name):
+    check = await asyncio.create_subprocess_exec("podman", "healthcheck", "run", name, stdout=asyncio.subprocess.DEVNULL,
+                                                 stderr=asyncio.subprocess.DEVNULL)
+    return await check.wait() == 0
+
+
+async def health_checked(project, deps, waiting=compose.check_dep_conditions):
+    """A box has no systemd to run podman's health checks on their timers, so `condition: service_healthy`
+    would wait for ever: the dependencies' checks are run here until they pass, then compose waits as ever."""
+    names = [name for d in deps if d.condition == compose.ServiceDependencyCondition.HEALTHY
+             for name in project.container_names_by_service[d.name]]
+    while names:
+        passed = await asyncio.gather(*(passes(name) for name in names))
+        names = [name for name, ok in zip(names, passed) if not ok]
+        if names:
+            await asyncio.sleep(1)
+    await waiting(project, deps)
+
+
+compose.get_net_args = on_the_box
+compose.check_dep_conditions = health_checked
+compose.assert_cnt_nets = no_networks
+compose.PodmanCompose.resolve_in_pod = lambda self: False  # (a pod would have a network of its own)
+compose.main()

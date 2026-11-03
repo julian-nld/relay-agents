@@ -1,0 +1,57 @@
+Screen {
+    background: $surface;
+}
+
+#title {
+    padding: 0 1;
+    background: $panel;
+    width: 100%;
+}
+
+#text {
+    height: 1fr;
+    border: none;
+}
+
+#status {
+    padding: 0 1;
+    width: 100%;
+    color: $text-muted;
+}
+
+#status.error {
+    color: $error;
+}
+
+#help {
+    padding: 0 1;
+    color: $text-muted;
+}
+
+ModalScreen {
+    align: center middle;
+}
+
+.dialog {
+    width: 50;
+    max-width: 100%;
+    height: auto;
+    border: round $accent;
+    background: $panel;
+    padding: 0 1;
+}
+
+.dialog Label {
+    width: 100%;
+    text-wrap: wrap;
+}
+
+.buttons {
+    height: auto;
+    margin-top: 1;
+}
+
+.buttons Button {
+    min-width: 8;
+    margin-right: 1;
+}

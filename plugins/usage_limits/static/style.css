@@ -1,0 +1,43 @@
+/* Usage limits' page (static/index.js), in Relay's own colours: one quiet line per window, the data the only loud
+   thing; text in text colours, never the line's */
+.ul-page { max-width: 860px; margin: 0 auto; }
+.ul-page h1 { margin: 6px 0 4px; font-size: 24px; }
+.ul-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 16px; }
+.ul-ranges { display: inline-flex; gap: 4px; }
+.ul-controls .btn[aria-pressed="true"] { background: var(--bg-active); border-color: var(--border-strong); }
+.ul-status { margin-left: auto; font-size: 13px; }
+.ul-body { display: grid; gap: 14px; transition: opacity .15s; }
+.ul-loading { opacity: .6; }
+.ul-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; background: var(--bg); }
+.ul-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ul-window { margin-top: 10px; }
+.ul-window-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; font-size: 14px; }
+.ul-window-head .muted { margin-left: auto; font-size: 13px; }
+
+.ul-chart { position: relative; margin-top: 4px; min-width: 0; }
+.ul-chart svg { display: block; overflow: visible; }
+.ul-chart svg:focus { outline: none; }
+.ul-chart svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+.ul-grid line { stroke: var(--border); stroke-width: 1; }
+.ul-grid text, .ul-low-label { fill: var(--fg-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ul-low-label { paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }  /* (readable where the line runs) */
+.ul-low { stroke: var(--danger); stroke-width: 1; opacity: .55; }
+.ul-area { fill: var(--accent); fill-opacity: .1; }
+.ul-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ul-cross { stroke: var(--fg-muted); stroke-width: 1; }
+.ul-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+.ul-hit { fill: transparent; cursor: crosshair; }
+.ul-tip { position: absolute; top: -6px; width: 120px; padding: 5px 8px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--bg-elevated); box-shadow: var(--shadow); font-size: 12px;
+  pointer-events: none; display: grid; gap: 1px; }
+.ul-tip[hidden] { display: none; }
+.ul-tip strong { font-size: 14px; color: var(--fg); }
+.ul-tip span { color: var(--fg-muted); }
+
+.ul-table { width: 100%; max-width: 360px; margin-top: 6px; border-collapse: collapse; font-size: 13px;
+  font-variant-numeric: tabular-nums; }
+.ul-table th, .ul-table td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--border); }
+.ul-table th { color: var(--fg-muted); font-weight: 500; }
+
+.ul-field, .ul-check { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+.ul-field .input { width: 90px; }

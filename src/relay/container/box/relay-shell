@@ -1,0 +1,134 @@
+#!/usr/bin/python3
+"""Relay's shell in a ProviderBox (relay/boxes.py): /bin/bash and /bin/sh are this.
+
+Whatever a provider starts as a shell (`bash -c …`, `sh -c …`, an interactive bash) comes
+here, and goes to Relay over the box's socket: the command, its folder, and its input;
+Relay runs it in the project's WorkBox and sends back its output and exit code.
+So every provider's commands run in the WorkBox, however it starts its shell.
+
+Protocol (relay/boxes.py, ExecGateway): a JSON line {argv, name, cwd, folder, tools}, then
+frames of a type byte, a 4-byte length and data: from here "i" input, "e" end of input,
+"k" a signal; from Relay "o" output, "r" error output, "x" the exit code.
+"""
+
+import json
+import os
+import re
+import signal
+import socket
+import struct
+import sys
+import threading
+
+SOCKET = os.environ.get("RELAY_EXEC_SOCKET", "/run/relay/exec.sock")
+EXCHANGE = os.environ.get("RELAY_EXCHANGE", "")
+# Claude Code keeps its Bash tool's folder in a file (pwd -P >| /tmp/claude-…-cwd): written in
+# a folder the WorkBox shares, and copied here afterwards.
+CWD_FILE = re.compile(r"(pwd -P >\| )(/tmp/claude-[A-Za-z0-9]+-cwd)$")
+
+
+def frame(kind, data=b""):
+    return kind + struct.pack(">I", len(data)) + data
+
+
+def files():
+    """The files our output goes to, when it goes to files (a detached command's log): a command
+    that outlives this shell writes there itself, where Relay can."""
+    found = {}
+    for fd, key in ((1, "out"), (2, "err")):
+        try:
+            target = os.readlink(f"/proc/self/fd/{fd}")
+        except OSError:
+            continue
+        if target.startswith("/") and os.path.isfile(target):
+            found[key] = target
+    return found or None
+
+
+def main():
+    name = "sh" if os.path.basename(sys.argv[0]) in ("sh", "dash") else "bash"
+    args = sys.argv[1:]
+    try:
+        cwd = os.getcwd()
+    except OSError:
+        cwd = "/"
+    # bash [options] -c [options] command …: with -c, the first word that isn't an option.
+    options = 0
+    while options < len(args) and args[options].startswith(("-", "+")) and args[options] not in ("-", "--"):
+        options += 1
+    dash_c = any(not a.startswith("--") and a.startswith("-") and "c" in a[1:] for a in args[:options])
+    at = options + (options < len(args) and args[options] == "--") if dash_c else None
+    wanted, shared = None, None
+    if at is not None and at < len(args) and EXCHANGE:
+        wanted = CWD_FILE.search(args[at])
+        if wanted:
+            shared = os.path.join(EXCHANGE, f"{os.getpid()}-{os.urandom(4).hex()}-cwd")
+            args[at] = args[at][:wanted.start(2)] + shared
+    try:
+        connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        connection.connect(SOCKET)
+    except OSError as exc:
+        sys.stderr.write(f"Relay isn't running, so this command can't run ({exc}). Start Relay and try again.\n")
+        return 127
+    writing = threading.Lock()
+
+    def send(kind, data=b""):
+        with writing:
+            try:
+                connection.sendall(frame(kind, data))
+            except OSError:
+                pass
+
+    # RELAY_TOOLS: the conversation's tools script, when the agent's program says which (`relay` uses it).
+    header = {"argv": args, "name": name, "cwd": cwd, "folder": os.environ.get("RELAY_FOLDER") or None,
+              "tools": os.environ.get("RELAY_TOOLS") or None, "files": files()}
+    connection.sendall((json.dumps(header) + "\n").encode())
+
+    def pump():
+        try:
+            while True:
+                data = os.read(0, 65536)
+                if not data:
+                    break
+                send(b"i", data)
+        except OSError:
+            pass
+        send(b"e")
+
+    threading.Thread(target=pump, daemon=True).start()
+    stopped = []
+
+    def on_signal(number, _frame):
+        stopped.append(number)
+        send(b"k", str(number).encode())
+
+    for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(number, on_signal)
+    reader = connection.makefile("rb")
+    code = 1
+    while True:
+        head = reader.read(5)
+        if len(head) < 5:
+            code = 128 + (stopped[0] if stopped else signal.SIGHUP)
+            break
+        kind, size = head[:1], struct.unpack(">I", head[1:])[0]
+        data = reader.read(size)
+        if kind == b"o":
+            os.write(1, data)
+        elif kind == b"r":
+            os.write(2, data)
+        elif kind == b"x":
+            code = int(data or b"1")
+            break
+    if shared and os.path.exists(shared):
+        try:
+            with open(shared) as found, open(wanted.group(2), "w") as there:
+                there.write(found.read())
+            os.unlink(shared)
+        except OSError:
+            pass
+    return code
+
+
+if __name__ == "__main__":
+    os._exit(main())

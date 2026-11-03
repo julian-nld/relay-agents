@@ -1,0 +1,16 @@
+/* The Chrome tab (static/index.js): numbered steps, copyable blocks in Relay's own colours */
+.chr-step { margin: 14px 0 18px; }
+.chr-step h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+.chr-number { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--accent); color: var(--accent-fg); font-size: 12px; }
+.chr-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chr-said { margin: 0; }
+.chr-said:empty { display: none; }
+.chr-said .icon { vertical-align: -2px; color: var(--success); }
+.chr-block { position: relative; margin: 6px 0 10px; }
+.chr-code { margin: 0; padding: 10px 40px 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-code); font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chr-copy { position: absolute; top: 6px; right: 6px; }
+.chr-make { display: flex; gap: 8px; align-items: center; max-width: 420px; }
+.chr-make .input { flex: 1; min-width: 0; }
+.chr-made p { margin: 8px 0; }

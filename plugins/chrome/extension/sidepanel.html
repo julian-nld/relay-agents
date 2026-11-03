@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <title>Relay</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="vendor/marked.min.js"></script>
+  <script src="vendor/purify.min.js"></script>
+  <script src="sidepanel.js" type="module"></script>
+</head>
+<body class="panel">
+  <header class="bar">
+    <img src="icons/icon.svg" class="logo" alt="">
+    <button id="title" class="title" title="Your conversations">
+      <span id="title-text">New chat</span><span data-icon="chevron" data-size="14"></span>
+    </button>
+    <button id="new" class="icon-btn" title="New chat"><span data-icon="plus"></span></button>
+    <button id="scripts-btn" class="icon-btn" title="Your scripts"><span data-icon="terminal"></span></button>
+    <button id="open" class="icon-btn" title="Open in Relay"><span data-icon="external"></span></button>
+    <button id="settings" class="icon-btn" title="Settings"><span data-icon="settings"></span></button>
+  </header>
+
+  <section id="history" class="history" hidden>
+    <input id="search" type="search" placeholder="Search conversations" autocomplete="off">
+    <div id="history-list" class="history-list"></div>
+  </section>
+
+  <section id="scripts" class="scripts" hidden></section>
+
+  <section id="setup" class="setup" hidden></section>
+
+  <main id="thread" class="thread"></main>
+
+  <section id="asks" class="asks" aria-live="polite"></section>
+
+  <footer id="composer" class="composer">
+    <div id="queue" class="queued"></div>
+    <div id="notice" class="notice" hidden></div>
+    <div id="contexts" class="contexts"></div>
+    <div class="box">
+      <textarea id="input" rows="1" placeholder="Ask Relay…"></textarea>
+      <div class="row">
+        <button id="add-page" class="tool-btn" title="Send this page along"><span data-icon="page"></span></button>
+        <button id="add-shot" class="tool-btn" title="Send a screenshot of this tab along"><span data-icon="camera"></span></button>
+        <select id="provider" class="agent" title="Agent"></select>
+        <select id="model" class="agent" title="Model"></select>
+        <button id="send" class="send" title="Send"><span data-icon="send"></span></button>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" hidden></div>
+</body>
+</html>

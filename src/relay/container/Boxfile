@@ -1,0 +1,27 @@
+# The image Relay's providers run in (relay/boxes.py): a ProviderBox. The provider's own
+# program (Claude Code, opencode, Copilot) comes from the machine, mounted read-only, or was
+# installed in the provider's own home (Template.home: a provider added with an agent); here is
+# what it needs around it: Node.js 22 with npm (NodeSource's, as the WorkBox has it) for the many
+# agents written for it, curl and unzip for installers. Its shells are Relay's: /bin/bash and
+# /bin/sh hand every command to Relay (box/relay-shell), which runs it in the project's WorkBox.
+# Built by Relay.
+FROM docker.io/library/debian:trixie-slim
+ENV LANG=C.UTF-8
+# (apt downloads as root: a small subuid range doesn't map its _apt user; see Containerfile)
+RUN echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99relay \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends python3 git ripgrep ca-certificates procps libstdc++6 \
+    curl unzip xz-utils \
+ && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o /usr/share/keyrings/nodesource.asc \
+ && echo "deb [signed-by=/usr/share/keyrings/nodesource.asc] https://deb.nodesource.com/node_22.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
+COPY box/relay-shell box/relay-reap /usr/lib/relay/
+# Last: from here on a shell is Relay's (the real ones stay, for nothing in particular).
+RUN cp /usr/bin/bash /usr/lib/relay/bash.real \
+ && chmod 755 /usr/lib/relay/relay-shell /usr/lib/relay/relay-reap \
+ && ln -sf /usr/lib/relay/relay-shell /usr/bin/bash \
+ && ln -sf /usr/lib/relay/relay-shell /usr/bin/sh \
+ && ln -sf /usr/lib/relay/relay-shell /usr/bin/dash

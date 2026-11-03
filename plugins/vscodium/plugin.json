@@ -1,0 +1,6 @@
+{
+  "label": "VSCodium",
+  "description": "Relay in VSCodium (and VS Code): your conversations in its side bar, a chat with Relay's agents, a code task's changes in its diff editor.",
+  "version": "1.2.1",
+  "api": 1
+}

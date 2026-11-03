@@ -1,0 +1,47 @@
+/* Server's page (static/index.js), in Relay's own colours: values in text colours, a meter's fill by how full it
+   is, the sparklines quiet with their latest point in the accent */
+.sv-page { max-width: 960px; margin: 0 auto; }
+.sv-page h1 { margin: 6px 0 4px; font-size: 24px; }
+.sv-page h2 { margin: 26px 0 4px; font-size: 17px; }
+.sv-lead { font-variant-numeric: tabular-nums; }
+.sv-warnings { display: grid; gap: 6px; margin: 12px 0; }
+.sv-warnings:empty { display: none; }
+.sv-warning { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--warning);
+  border-left-width: 4px; border-radius: var(--radius-sm); background: var(--bg); }
+.sv-warning svg { color: var(--warning); flex: none; }
+.sv-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); gap: 12px;
+  margin-top: 14px; }
+.sv-tile { min-width: 0; padding: 12px 14px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); }
+.sv-label { font-size: 13px; color: var(--fg-muted); overflow-wrap: anywhere; }
+.sv-value { font-size: 26px; font-weight: 600; margin: 2px 0; }
+.sv-sub { font-size: 12.5px; color: var(--fg-muted); overflow-wrap: anywhere; min-height: 1.4em; }
+.sv-meter { height: 6px; margin: 8px 0 6px; border-radius: 3px; background: var(--bg-hover); overflow: hidden; }
+.sv-meter span { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+.sv-meter.warn span { background: var(--warning); }
+.sv-meter.bad span { background: var(--danger); }
+.sv-spark { position: relative; min-height: 40px; }
+.sv-spark svg { display: block; overflow: visible; }
+.sv-spark svg:focus { outline: none; }
+.sv-spark svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius-sm); }
+.sv-spark-empty { position: absolute; left: 0; top: 12px; font-size: 12px; color: var(--fg-faint); }
+.sv-base { stroke: var(--border); stroke-width: 1; }
+.sv-line { fill: none; stroke: var(--fg-muted); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.sv-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+.sv-cross { stroke: var(--fg-muted); stroke-width: 1; }
+.sv-hit { fill: transparent; cursor: crosshair; }
+.sv-tip { position: absolute; bottom: 100%; width: 88px; padding: 4px 7px; border: 1px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--bg-elevated); box-shadow: var(--shadow); font-size: 12px;
+  pointer-events: none; display: grid; }
+.sv-tip[hidden] { display: none; }
+.sv-tip span { color: var(--fg-muted); }
+.sv-note { margin: 0 0 8px; font-size: 13px; }
+.sv-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.sv-table th, .sv-table td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--border);
+  vertical-align: top; }
+.sv-table th { color: var(--fg-muted); font-weight: 500; }
+.sv-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 0;
+  padding-left: 10px; }
+.sv-table td:first-child { overflow-wrap: anywhere; }
+.sv-kind { color: var(--fg-muted); }
+.sv-name { display: block; font-size: 12px; color: var(--fg-faint); font-family: var(--font-mono, monospace); }

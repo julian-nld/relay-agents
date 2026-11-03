@@ -1,0 +1,39 @@
+Screen {
+    background: $surface;
+    padding: 0 1;
+}
+
+#title {
+    padding: 1 0;
+}
+
+#path {
+    width: 100%;
+}
+
+#error {
+    color: $error;
+    width: 100%;
+    height: auto;
+}
+
+.section {
+    color: $text-muted;
+    text-style: bold;
+    margin-top: 1;
+}
+
+#recent {
+    height: 1fr;
+    background: transparent;
+    border: none;
+}
+
+#empty {
+    color: $text-muted;
+    height: 1fr;
+}
+
+#help {
+    color: $text-muted;
+}

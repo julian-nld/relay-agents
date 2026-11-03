@@ -1,0 +1,10 @@
+/* Notes' page (static/index.js), in Relay's own colours */
+.notes { max-width: 720px; margin: 0 auto; }
+.notes h1 { margin: 6px 0 16px; font-size: 24px; }
+.notes-add { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 18px; }
+.notes-new { flex: 1; resize: vertical; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); color: var(--fg); font: inherit; }
+.notes-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.notes-item p { margin: 0 0 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notes-meta { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--fg-muted); }
+.notes-meta button { margin-left: auto; }

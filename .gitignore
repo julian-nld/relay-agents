@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+
+# Bundled Python dependencies (scripts/vendor.sh).
+/vendor/
+/vendor.new/
+/vendor.old/
+/.vendor.lock
+/vendor-dev/
+
+# A contributor's own machine and accounts (AGENTS.md says what goes there)
+/AGENTS.local.md
+/CLAUDE.local.md

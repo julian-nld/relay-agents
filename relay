@@ -1,0 +1,39 @@
+#!/bin/sh
+# Launcher for Relay, the web app: runs the code in this folder; its data is in
+# RELAY_HOME (default ~/.local/share/relay).
+set -e
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+
+PY=
+for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 &&
+        "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
+        PY=$candidate
+        break
+    fi
+done
+if [ -z "$PY" ]; then
+    echo "relay: Python 3.10 or newer is required" >&2
+    exit 1
+fi
+
+export PYTHONPATH="$ROOT/src:$ROOT/vendor${PYTHONPATH:+:$PYTHONPATH}"
+# Bytecode caches in the cache folder, not next to the code.
+export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-${XDG_CACHE_HOME:-$HOME/.cache}/opencode-manager/pycache}"
+
+# After an upgrade (git pull) that changed the dependencies: bring vendor/ up to date. Without
+# internet that fails, and Relay starts with what it has.
+if [ -d "$ROOT/vendor" ] \
+    && [ "$(cat "$ROOT/requirements.lock")" != "$(cat "$ROOT/vendor/.requirements.lock" 2>/dev/null)" ]; then
+    echo "relay: the Python dependencies changed; updating vendor/" >&2
+    PYTHON="$PY" sh "$ROOT/scripts/vendor.sh" >&2 \
+        || echo "relay: couldn't update them (no internet?); run: sh \"$ROOT/scripts/vendor.sh\"" >&2
+fi
+
+if ! "$PY" -c 'import starlette, uvicorn' 2>/dev/null; then
+    echo "relay: Python dependencies missing; run: sh \"$ROOT/scripts/vendor.sh\"" >&2
+    exit 1
+fi
+
+exec "$PY" -m relay "$@"

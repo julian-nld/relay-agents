@@ -1,0 +1,6 @@
+{
+  "label": "OpenHands",
+  "description": "OpenHands' Agent Canvas in a container, working with Relay's agents through the ACP plugin.",
+  "version": "1.0",
+  "api": 1
+}

@@ -1,0 +1,6 @@
+{
+  "label": "Server",
+  "description": "This machine's CPU, memory and disks, what each container uses, warnings when it gets tight, and a server_status tool for agents.",
+  "version": "1.0",
+  "api": 1
+}

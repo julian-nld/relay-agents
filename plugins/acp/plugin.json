@@ -1,0 +1,6 @@
+{
+  "label": "ACP",
+  "description": "Relay's agents as one ACP agent, for OpenHands, Zed, JetBrains, Toad and any other ACP client.",
+  "version": "1.0",
+  "api": 1
+}

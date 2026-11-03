@@ -1,0 +1,18 @@
+#!/usr/bin/python3
+"""End what a provider's run started in its ProviderBox: every process with RELAY_RUN=<tag>
+in its environment (relay/boxes.py, when the run ends or is stopped)."""
+
+import os
+import signal
+import sys
+
+tag = f"RELAY_RUN={sys.argv[1]}".encode() if len(sys.argv) > 1 else None
+for entry in os.listdir("/proc") if tag else []:
+    if not entry.isdigit() or int(entry) == os.getpid():
+        continue
+    try:
+        with open(f"/proc/{entry}/environ", "rb") as environ:
+            if tag in environ.read().split(b"\0"):
+                os.kill(int(entry), signal.SIGKILL)
+    except OSError:
+        pass

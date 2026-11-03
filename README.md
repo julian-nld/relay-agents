@@ -39,7 +39,7 @@ diff.
   runs there, or VSCodium.
 - **Plugins.** What's new comes as a plugin, a folder Relay loads: buttons and pages, API routes, background work and
   tools for agents. See [below](#plugins) and [Writing a plugin](docs/WRITING-A-PLUGIN.md).
-- **Works on your phone** (add it to your home screen), light and dark. The interface needs no internet.
+- **Works on your phone** (add it to your home screen), light and dark.
 
 <table>
   <tr>
@@ -74,7 +74,7 @@ ln -s ~/relay/plugins/vscodium ~/.local/share/relay/plugins/vscodium
 
 ## Is it for you?
 
-Relay is made for **one person on their own machine**, typically a home server on the local network. Within that, it
+Relay is made for **personal use**, typically a home server on the local network. Within that, it
 puts usability before security:
 
 - **Agents don't ask before each command.** They run in containers instead.
